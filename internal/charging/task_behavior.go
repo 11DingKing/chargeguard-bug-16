@@ -25,13 +25,14 @@ func (tx *stationTx) Rollback() { tx.staged = nil; tx.Close() }
 func (tx *stationTx) Commit()   { tx.owner.stored = append(tx.owner.stored, tx.staged...); tx.Close() }
 func (s *StationBatch) Register(names []string) error {
 	tx := s.begin()
-	defer tx.Close()
+	defer tx.Rollback()
 	for _, name := range names {
 		if name == "invalid" {
 			return ErrInvalidStation
 		}
-		s.stored = append(s.stored, name)
+		tx.staged = append(tx.staged, name)
 	}
+	tx.Commit()
 	return nil
 }
 func (s *StationBatch) Stats() (int, int) { return len(s.stored), s.active }
